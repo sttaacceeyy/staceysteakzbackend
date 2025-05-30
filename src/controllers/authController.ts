@@ -28,13 +28,33 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
 export const login = async (req: Request, res: Response): Promise<any> => {
   const { username, password } = req.body;
 
-  const user = await prisma.user.findUnique({ where: { username } });
-  if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: {
+      id: true,
+      username: true,
+      password: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
   const valid = await comparePassword(password, user.password);
-  if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
+  if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+  const token = jwt.sign(
+    { userId: user.id, role: user.role },
+    process.env.JWT_SECRET!,
+    { expiresIn: '24h' }
+  );
 
-  res.json({ token });
+  // Remove password from user object before sending
+  const { password: _, ...userWithoutPassword } = user;
+
+  res.json({
+    token,
+    user: userWithoutPassword
+  });
 };
