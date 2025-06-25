@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 import dotenv from 'dotenv';
-
 import { comparePassword, hashPassword } from '../utils/hash';
 
 dotenv.config();
@@ -10,6 +9,11 @@ dotenv.config();
 export const signup = async (req: Request, res: Response): Promise<any> => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
+
+  // Check for existing username
   const existingUser = await prisma.user.findUnique({ where: { username } });
   if (existingUser) return res.status(400).json({ message: 'Username already taken' });
 
@@ -18,23 +22,30 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
     data: {
       username,
       password: hashedPassword,
-      role: 'WRITER',
+      role: 'CUSTOMER', // Always assign CUSTOMER role on signup
+      isActive: true
     },
   });
 
-  res.status(201).json({ message: 'User created', user: { id: user.id, username: user.username } });
+  res.status(201).json({ message: 'User created', user: { id: user.id, username: user.username, role: user.role } });
 };
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
 
   const user = await prisma.user.findUnique({
     where: { username },
     select: {
       id: true,
       username: true,
-      password: true,
+      password: true, // Add password to select for login check
       role: true,
+      branchId: true,
+      isActive: true,
       createdAt: true,
       updatedAt: true
     }
@@ -50,7 +61,6 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     { expiresIn: '24h' }
   );
 
-  // Remove password from user object before sending
   const { password: _, ...userWithoutPassword } = user;
 
   res.json({

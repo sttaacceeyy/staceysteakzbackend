@@ -11,7 +11,7 @@ import { seedAdminUser } from './utils/seedAdmin';
 dotenv.config();
 
 const app = express();
-const port = 3001;
+const port = 3000; // Change to 3000 for frontend compatibility
 
 // Middleware
 app.use(cors()); // Add CORS support

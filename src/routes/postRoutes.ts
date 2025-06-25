@@ -1,19 +1,7 @@
-import express from 'express';
-import {
-  getPosts,
-  createPost,
-  updatePost,
-  deletePost,
-} from '../controllers/postController';
-import { authenticateToken } from '../middleware/authMiddleware';
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 
-// Public routes
-router.get('/', getPosts);
-
-// Protected routes - require authentication
-router.post('/', authenticateToken, createPost);
-router.put('/:id', authenticateToken, updatePost);
-router.delete('/:id', authenticateToken, deletePost);
+// All post routes are obsolete. The Post model no longer exists in the new schema.
+// Export an empty router to avoid import errors.
 
 export default router;
